@@ -93,6 +93,94 @@ def file2matrix(filename):
     return returnMat,classLabelVector #返回处理好的特征数组以及标签列表
 
 
+############## 数据归一化要加的代码 ###########################
+#特征变量归一化
+def autoNorm(dataSet):
+    
+    #取出每一列的最小值，即每一个特征的最小值
+    minVals = dataSet.min(0)
+    
+    #取出每一列的最大值，即每一个特征的最大值
+    maxVals = dataSet.max(0)
+    
+    #每一个特征变量的变化范围
+    ranges = maxVals - minVals
+    
+    #初始化待返回的归一化特征数据集
+    normDataSet = zeros(shape(dataSet))
+    
+    #特征数据集行数，即样本个数
+    m = dataSet.shape[0]
+    
+    #利用tile()函数构造与原特征数据集同大小的矩阵，并进行归一化计算
+    normDataSet = dataSet - tile(minVals,(m,1))
+    normDataSet = normDataSet/tile(ranges,(m,1))
+    
+    return normDataSet,ranges,minVals
+
+
+############## 测试算法要加的代码 #####################
+#分类器测试
+def datingClassTest():
+    
+    #给定用于测试分类器的样本比例
+    hoRatio = 0.10
+    
+    #调用文本数据解析函数
+    datingDataMat,datingLabels = file2matrix('F:/programming tools/datingTestSet2.txt')
+    
+    #调用特征变量归一化函数
+    normMat,ranges,minVals = autoNorm(datingDataMat)
+    
+    #归一化的特征数据集行数，即样本个数
+    m = normMat.shape[0]
+    
+    #用于测试分类器的测试样本个数
+    numTestVecs = int(m*hoRatio)
+    
+    #初始化分类器犯错样本个数
+    errorCount = 0.0
+    
+    for i in range(numTestVecs):
+        #以测试样本作为输入，测试样本之后的样本作为训练样本，对测试样本进行分类
+        classifierResult = classify0(normMat[i,:],normMat[numTestVecs:m,:],datingLabels[numTestVecs:m],3)
+        
+        #对比分类器对测试样本预测的类别和其真实类别
+        print("the classifier came back with: %d,the real answer is: %d" % (classifierResult,datingLabels[i]))
+        
+        #统计分类出错的测试样本数
+        if (classifierResult != datingLabels[i]):
+            errorCount+=1.0
+
+#输出分类器错误率
+print("the total error rate is: %f" % (errorCount/float(numTestVecs)))
+
+
+############ 约会网站预测函数  #########################
+def classifyPerson():
+    
+    #定义一个存储了三个字符串的列表，分别对应不喜欢，一般喜欢，很喜欢
+    resultList = ['not at all','in small dose','in large dose']
+    
+    #用户输入三个特征变量，并将输入的字符串类型转化为浮点型
+    ffMiles = float(input("frequent flier miles earned per year:"))
+    percentats = float(input("percentage of time spent playing video games:"))
+    iceCream = float(input("liters of ice cream consumed per year:"))
+    
+    #调用文本数据解析函数
+    datingDataMat,datingLabels = file2matrix('/Users/bindo/Desktop/datingTestSet2.txt')
+    
+    #调用特征变量归一化函数
+    normMat,ranges,minVals = autoNorm(datingDataMat)
+    
+    #将输入的特征变量构造成特征数组（矩阵）形式
+    inArr = array([ffMiles,percentats,iceCream])
+    
+    #调用kNN简单实现函数
+    classifierResult = classify0((inArr-minVals)/ranges,normMat,datingLabels,3)
+    
+    #将分类结果由数字转换为字符串
+    print("You will probably like this person",resultList[classifierResult - 1])
 
 
 

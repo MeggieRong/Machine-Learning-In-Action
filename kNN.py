@@ -4,9 +4,9 @@ import operator     # 导入python函数库，运算符模块
 
 # 创建数据集
 def createDataSet():
-	group = array([[1.0,1.1],[1.0,1.0],[0,0],[0,0.1]])
-	labels = ['A','A','B','B']
-	return group, labels 
+    group = array([[1.0,1.1],[1.0,1.0],[0,0],[0,0.1]])
+    labels = ['A','A','B','B']
+    return group, labels
 
 # 自定义classify0()函数
 # classify0()函数需要在时候的我们提供四个参数，分别是
@@ -35,7 +35,7 @@ def classify0(inX, dataSet, labels, k):
     
     # 所以下面我们就能得到目标和训练数值之间的差值
     diffMat = tile(inX, (dataSetSize,1)) - dataSet
-
+    
     # 这么理解,每个点都有横坐标和纵坐标,这里是横坐标之差和纵坐标之差都让它们平方
     sqDiffMat = diffMat**2
     
@@ -47,7 +47,7 @@ def classify0(inX, dataSet, labels, k):
     
     # 我们升序排序一下,把距离小的往前面排,sortedDistIndicies最后的值是 距离值
     sortedDistIndicies = distances.argsort()
-
+    
     # 二、选择距离最小的k个点
     classCount = {} #先声明,classCount是一个字典  ##补充 列表list [] ; 元组tuple () ; 字典dict {} ; 集合set ()
     
@@ -61,7 +61,7 @@ def classify0(inX, dataSet, labels, k):
         # 这里用到dict.get(key, default=None)函数
         # dict字典就是刚开始声明的classCount, key就是标签, 我们找到这个标签就+1,没有找到就返回0
         classCount[voteIlabel] = classCount.get(voteIlabel,0)+1
-
+    
     # 使用sorted()函数, 函数格式为sorted(iterable, cmp=None, key=None, reverse=False)
     # iterable是可迭代类型;key用列表元素的某个属性或函数进行作为关键字;reverse=True降序/False升序,默认是降序
     # classCount.items() 将classCount字典分解为元组列表
@@ -71,6 +71,7 @@ def classify0(inX, dataSet, labels, k):
     
     #sortedClassCount[0]是标签数最大的那个元组，再多加一个0，就是返回这个元组的标签名称
     return sortedClassCount[0][0]
+
 
 
 
@@ -123,38 +124,38 @@ def autoNorm(dataSet):
 #分类器测试
 def datingClassTest():
     
-    #给定用于测试分类器的样本比例
+    #验证集占据整个训练集的比例
     hoRatio = 0.10
     
-    #调用文本数据解析函数
+    #解析文本,分别分开特征和标签
     datingDataMat,datingLabels = file2matrix('F:/programming tools/datingTestSet2.txt')
     
-    #调用特征变量归一化函数
+    #归一化
     normMat,ranges,minVals = autoNorm(datingDataMat)
     
-    #归一化的特征数据集行数，即样本个数
+    #训练集个数
     m = normMat.shape[0]
     
-    #用于测试分类器的测试样本个数
+    #验证集个数
     numTestVecs = int(m*hoRatio)
     
     #初始化分类器犯错样本个数
     errorCount = 0.0
     
     for i in range(numTestVecs):
-        #以测试样本作为输入，测试样本之后的样本作为训练样本，对测试样本进行分类
+        # 90%训练集输入作为训练样本，对验证集进行分类
+        # classify0(验证集特征,训练集特征,训练集标签,距离)
         classifierResult = classify0(normMat[i,:],normMat[numTestVecs:m,:],datingLabels[numTestVecs:m],3)
         
         #对比分类器对测试样本预测的类别和其真实类别
         print("the classifier came back with: %d,the real answer is: %d" % (classifierResult,datingLabels[i]))
         
         #统计分类出错的测试样本数
-        if (classifierResult != datingLabels[i]):
-            errorCount+=1.0
+        if (classifierResult != datingLabels[i]):errorCount+=1.0
 
-#输出分类器错误率
-print("the total error rate is: %f" % (errorCount/float(numTestVecs)))
-
+    #输出分类器错误率
+    print("the total error rate is: %f" % (errorCount/float(numTestVecs)))
+    print(errorCount)
 
 ############ 约会网站预测函数  #########################
 def classifyPerson():
@@ -183,18 +184,104 @@ def classifyPerson():
     print("You will probably like this person",resultList[classifierResult - 1])
 
 
+############### 手写系统把数据处理成分类器需要格式的函数 ##########################
+def img2vector(filename):
+    
+    # numpy.zeros((n,m)) 创建一个n行m列的零矩阵，准备接收后面返回的数值
+    # 这里创建一个1行1024列的，零矩阵
+    returnVect = numpy.zeros((1,1024))
+    
+    # 打开文件
+    fr = open(filename)
+    
+    # 我们目的是循环读出文件的前32行
+    for i in range(32):
+        
+        # 一行一行读取文件,返回list []
+        lineStr = fr.readline()
+            
+        # 读取每一行的前32个字符
+        for j in range(32):
+                
+            # 零矩阵的第1行第33列 放入 第1个list的第1个数值
+            # 零矩阵的第1行第34列 放入 第1个list的第2个数值
+            # 到这里我还想不清楚为什么要这么弄
+            returnVect[0,32*i+j] = int(lineStr[j])
 
+    # 最后返回处理好的矩阵
+    return returnVect
 
+################## 手写识别的测试代码3############################################
+def handwritingClassTest():
 
+    # 声明hwLabels是一个列表
+    hwLabels = []
 
+    # os.listdir() 方法用于返回指定的文件夹包含的文件或文件夹的名字的列表
+    # 这里是要返回所有在trainingDigits的txt文件
+    trainingFileList = os.listdir('/Users/bindo/Desktop/Machine Learning/machinelearninginaction/Ch02/digits/trainingDigits')
 
+    # 看一下有多少个txt文件
+    m = len(trainingFileList)
 
+    # 创建m行1024列的零矩阵
+    # 我们想要把每个txt文件都弄成是1行1024列的矩阵，这样就可以把所有文件集成一个大矩阵
+    trainingMat = numpy.zeros((m,1024))
 
+    # 循环每一个txt文件
+    for i in range(m):
 
+        # 拿到第i个文件
+        fileNameStr = trainingFileList[i]
 
+        # 比如上面拿到第1个文件，叫做0_0.txt，我们把.当做分隔符分开，得到0_0和txt,然后选择第一个的，也就是剩下0_0
+        fileStr = fileNameStr.split('.')[0]
 
+        # 上面处理完了，剩下0_0，我们把_当做分隔符，又分开得到0和1，然后选择第一个的，也就是0，我们还让0变成int的0才输出
+        classNumStr = int(fileStr.split('_')[0])
 
+        # 把所有文件都这么处理后，剩下的那个int的数，都放到最初声明的hwLabels列表中
+        hwLabels.append(classNumStr)
 
+        # 调用上面的img2vector(filename)函数，最后img2vector返回的每一个文件变成一个处理好的矩阵后，
+        # 逐个按照i的顺序插入到零矩阵中
+        trainingMat[i,:] = img2vector('/Users/bindo/Desktop/Machine Learning/machinelearninginaction/Ch02/digits/trainingDigits/%s' % fileNameStr)
+
+    # 我们返回所有在testDigits的txt文件
+    testFileList = os.listdir('/Users/bindo/Desktop/Machine Learning/machinelearninginaction/Ch02/digits/testDigits')
+
+    # 初始化分类器犯错样本个数
+    errorCount = 0.0
+
+    # 看一下测试集有多少个txt文件
+    mTest = len(testFileList)
+
+    # 遍历所有测试集的txt文件
+    for i in range(mTest):
+
+        # 拿到测试集的第i个文件
+        fileNameStr = testFileList[i]
+
+        # 和上面一样的分隔符处理取整数输出值
+        fileStr = fileNameStr.split('.')[0]
+        classNumStr = int(fileStr.split('_')[0])
+
+        # 调用img2vector()对每一个测试集的txt文件处理输入一个1行1024列的矩阵
+        # 然后按照i的顺序逐个插入到mTest行1024列的零矩阵中
+        vectorUnderTest = img2vector('/Users/bindo/Desktop/Machine Learning/machinelearninginaction/Ch02/digits/testDigits/%s' % fileNameStr)
+
+        # 调用classify0()分类器函数，
+        #classify0(测试集特征，训练集特征，训练集标签，k)
+        classifierResult = classify0(vectorUnderTest,trainingMat,hwLabels,3)
+
+        # 把预测结果和真实结果对比一下
+        print("the classifier came back with %d, the real answer is: %d" % (classifierResult,classNumStr))
+
+        # 进行判断，如果测试结果和真实的测试集结果不一样，那么errorCount就加1
+        if (classifierResult != classNumStr): errorCount += 1.0
+
+    print("\nthe total number of errors is: %d" % errorCount)
+    print("\nthe total error rate is: %f" % (errorCount/float(mTest)))
 
 
 
